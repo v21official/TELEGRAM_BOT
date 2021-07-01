@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { LinkController } from './link.controller';
 import { LinkService } from './link.service';
-import { Link, LinkSchema } from './schema/link.schema';
+import { Link, LinkSchema } from './link.schema';
 
 @Module({
     imports: [MongooseModule.forFeature([{ name: Link.name, schema: LinkSchema }])],

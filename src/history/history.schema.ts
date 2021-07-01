@@ -14,9 +14,6 @@ export class History {
     @Prop({ required: true })
     money: number;
 
-    // @Prop({ required: true })
-    // payDate: Date;
-
     @Prop()
     note: string;
 

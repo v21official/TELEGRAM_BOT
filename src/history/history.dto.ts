@@ -13,9 +13,6 @@ export class CreateHistoryDto {
     @IsNotEmpty()
     readonly money: number;
 
-    // @IsNotEmpty()
-    // readonly payDate: Date;
-
     readonly note: string;
 }
 
@@ -31,18 +28,6 @@ export class UpdateHistoryDto {
     @IsString()
     @IsNotEmpty()
     readonly _id: string;
-
-    // @IsString()
-    // @IsNotEmpty()
-    // readonly partner: string;
-    //
-    // @IsString()
-    // @IsNotEmpty()
-    // readonly type: string;
-    //
-    // @IsInt()
-    // @IsNotEmpty()
-    // readonly money: number;
 
     readonly completed: boolean;
 

@@ -26,7 +26,8 @@ export class UserService {
     }
 
     async findByUsername({ username }): Promise<User> {
-        return await this.userModel.findOne({ username, isActive: true });
+        const user = await this.userModel.findOne({ username, isActive: true });
+        return  user;
     }
 
     async register(dto: CreateUserDto): Promise<User> {
@@ -35,7 +36,6 @@ export class UserService {
             isActive: true,
         });
         if (checkUsername)
-            // throw new HttpException('username already', HttpStatus.BAD_REQUEST)
             throw new BadRequestException(CONSTANTS.ERROR.USERNAME_EXISTS);
         const passwordHash = await this.encrypt(dto.password);
         const createdUser = new this.userModel({
@@ -83,8 +83,4 @@ export class UserService {
         const bytes = await crypto.AES.decrypt(text, secretKey);
         return bytes.toString(crypto.enc.Utf8);
     }
-
-    // async isOwner(owner: string, username: string): Promise<boolean> {
-    //     return this.accountModel.exists({ username, owner: owner })
-    // }
 }

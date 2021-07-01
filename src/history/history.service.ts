@@ -13,13 +13,10 @@ export class HistoryService {
         private readonly configService: ConfigService,
     ) {}
     async create(username: string, dto: CreateHistoryDto): Promise<History> {
-        console.log('username', username);
-        console.log('dto', dto);
         const created = new this.historyModel({
             username,
             partner: dto.partner,
             money: dto.money,
-            // payDate: dto.payDate,
             type: dto.type,
             note: dto.note,
         });
