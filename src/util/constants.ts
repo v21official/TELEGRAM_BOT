@@ -10,4 +10,7 @@ export class CONSTANTS {
         DATA_NOT_FOUND: 'Data Not Found',
         WRONG_PASSWORD: 'Wrong Password',
     };
+    static readonly TEXT = {
+        DO_YOU_LOVE_ME: 'Do you love me?',
+    };
 }
