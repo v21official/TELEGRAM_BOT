@@ -1,17 +1,43 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as TelegramBot from 'node-telegram-bot-api';
-import { request } from 'https';
+import { Telegraf } from 'telegraf';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-
-    await app.listen(9496);
+    await app.listen(process.env.PORT || 9496);
     console.log(`Application is running on: ${await app.getUrl()}`);
 
+    // const bot = new Telegraf(process.env.TOKEN_BOT);
+    //
+    // bot.on('text', (ctx) => {
+    //     // Explicit usage
+    //     ctx.telegram.sendMessage(ctx.chat.id, `Hello ${ctx.from.username}`);
+    //
+    //     // Using context shortcut
+    //     ctx.reply(`Hello ${ctx.state.role}`);
+    // });
+    // bot.command('quit', (ctx) => {
+    //     // Explicit usage
+    //     ctx.telegram.leaveChat(ctx.message.chat.id);
+    //
+    //     // Using context shortcut
+    //     ctx.leaveChat();
+    // });
+    // bot.command('add', (ctx) => {
+    //     ctx.reply('nhap ten mien');
+    //     console.log(ctx);
+    // });
+    // bot.start((ctx) => ctx.reply('Welcome'));
+    // bot.help((ctx) => ctx.reply('Send me a sticker'));
+    // bot.on('sticker', (ctx) => ctx.reply('👍'));
+    // bot.hears('hi', (ctx) => ctx.reply('Hey there'));
+    // await bot.launch();
+    // process.once('SIGINT', () => bot.stop('SIGINT'));
+    // process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
     const myId = 1851862079;
-    const myUsername = 'v21official_bot';
-    const myToken = '1851862079:AAH3yPiqUD4kDCrMET-bPB25Th07G1ToPQI';
+    const myToken = process.env.TOKEN_BOT;
     const bot = new TelegramBot(myToken, { polling: true });
 
     // Matches /echo [whatever]
@@ -22,11 +48,14 @@ async function bootstrap() {
         bot.sendMessage(chatId, whatever);
     });
 
+    bot.onText(/\/monitor_add/, async (msg) => {
+        bot.sendMessage(msg.chat.id, '👍');
+    });
+
     // Matches /photo
-    bot.onText(/\/photo/, (msg) => {
+    bot.onText(/\/photo/, async (msg) => {
         // From file path
-        const photo = `/public/hagiang.jpg`;
-        console.log(photo);
+        const photo = 'http://inet.vn/public/img/banners/email-theo-ten-mien-featured.png';
         bot.sendPhoto(msg.chat.id, photo, {
             caption: "I'm a bot!",
         });
@@ -34,7 +63,6 @@ async function bootstrap() {
 
     // Matches /audio
     bot.onText(/\/audio/, (msg) => {
-        console.log(__dirname);
         const url = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Example.ogg';
         bot.sendAudio(msg.chat.id, url);
     });
@@ -66,14 +94,24 @@ async function bootstrap() {
         });
     });
 
+    bot.onText(/\/remove_keyboard/, (msg) => {
+        bot.sendMessage(msg.chat.id, 'Success! Keyboard removed', {
+            reply_markup: {
+                remove_keyboard: true,
+                keyboard: [],
+            },
+        });
+    });
+
     bot.onText(/\/send_html/, (msg) => {
         bot.sendMessage(
             msg.chat.id,
             `<a href="fb.com/v21official">open facebook</a>
-<b>in đậm</b>
-<i>in nghiêng</i>
-<code>thẻ code</code>
-`,
+    <b>in đậm</b>
+    <i>in nghiêng</i>
+    <code>thẻ code</code>
+    thả tim luôn /tha_tim
+    `,
             {
                 parse_mode: 'HTML',
                 reply_markup: {
@@ -105,20 +143,20 @@ async function bootstrap() {
 
     // Handle callback queries
     bot.on('callback_query', (callbackQuery) => {
+        // callback_query use with inline_keyboard
         const action = callbackQuery.data;
         const msg = callbackQuery.message;
         const opts = {
             chat_id: msg.chat.id,
             message_id: msg.message_id,
         };
-        let text = '';
+        let text;
         if (action === 'viewResult') {
-            text = 'Cú lừa hihi: iNET Sssswwww';
-        }
-        // if (text) bot.editMessageText(text, opts);
-        if (text){
-            bot.editMessageText(msg.text, opts);
-            bot.sendMessage(msg.chat.id, 'Cú lừa hihi: iNET Sssswwww');
+            bot.editMessageText(
+                `${msg.text}
+    Bất ngờ chưa haha: iNET Sssswwww`,
+                opts,
+            );
         }
     });
 
