@@ -13,4 +13,33 @@ export class CONSTANTS {
     static readonly TEXT = {
         DO_YOU_LOVE_ME: 'Do you love me?',
     };
+    static readonly STATUS = {
+        SUCCESS: 'SUCCESS',
+        ERROR: 'ERROR',
+    };
+    static readonly COMMAND = {
+        WHOIS: 'whois',
+        MONITOR_ADD: 'monitor_add',
+        CANCEL: 'cancel',
+    };
+    static readonly BOT_INTRO = `Xin chào, tôi là trợ lý của v21official
+    
+/tha_tim - Bot thả tim
+/monitor_add - Thêm mới dịch vụ
+/whois - Kiểm tra tên miền
+/cancel - Hủy lệnh đang chờ và xóa keyboard
+    `;
+}
+export function validateDomain(domain: string) {
+    const pattern = new RegExp(
+        '^(https?:\\/\\/)?' + // protocol
+            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+            '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+            '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+            '(\\#[-a-z\\d_]*)?$',
+        'i',
+    ); // fragment locator
+    if (!pattern.test(domain)) return false;
+    return true;
 }
