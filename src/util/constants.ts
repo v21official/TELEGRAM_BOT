@@ -30,6 +30,7 @@ export class CONSTANTS {
 /cancel - Hủy lệnh đang chờ và xóa keyboard
     `;
 }
+
 export function validateDomain(domain: string) {
     const pattern = new RegExp(
         '^(https?:\\/\\/)?' + // protocol
@@ -42,4 +43,12 @@ export function validateDomain(domain: string) {
     ); // fragment locator
     if (!pattern.test(domain)) return false;
     return true;
+}
+
+export function getFullName(senderMessage: any) {
+    return (
+        (senderMessage.first_name ? senderMessage.first_name : '') +
+        ' ' +
+        (senderMessage.last_name ? senderMessage.last_name : '')
+    ).trim();
 }
