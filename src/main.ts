@@ -1,32 +1,30 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as TelegramBot from 'node-telegram-bot-api';
 import { Telegraf, Markup } from 'telegraf';
-import { get, post } from './api';
 import { CONSTANTS, getFullName, validateDomain } from './util/constants';
+import { whoisDomain } from './api/inet';
+import { addMonitor } from './api/monitor';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-    await app.listen(process.env.PORT || 9496);
+    await app.listen(process.env.PORT || 8888);
     console.log(`Application is running on: ${await app.getUrl()}`);
 
-    const bot = new Telegraf(process.env.TOKEN_BOT);
-    const botId = process.env.ID_BOT;
+    const botToken = process.env.TOKEN_BOT;
+    const botId = botToken.split(':')[0];
+    const bot = new Telegraf(botToken);
+
     const state: any = {};
+    const optionHTML: any = { parse_mode: 'HTML' };
+    const removeKeyboard: any = Markup.removeKeyboard();
 
     bot.start((ctx) => ctx.reply(CONSTANTS.BOT_INTRO));
     bot.help((ctx) => ctx.reply(CONSTANTS.BOT_INTRO));
-    bot.on('photo', (ctx) => ctx.reply('👍 🤣 🤯 🥳 🥰 wow ảnh đẹp ghê ^^'));
-    bot.hears('hi', (ctx) => ctx.reply('Hi ' + getFullName(ctx.message.from)));
-
-    bot.command('tha_tim', (ctx) => {
-        state[ctx.message.from.id] = '';
-        return ctx.reply(`❤`);
-    });
+    bot.hears('hello', (ctx) => ctx.reply('Xin chào ' + getFullName(ctx.message.from)));
 
     bot.command(CONSTANTS.COMMAND.CANCEL, (ctx) => {
         state[ctx.message.from.id] = {};
-        return ctx.reply(`Clean!`, Markup.removeKeyboard());
+        return ctx.reply(`Clean`, removeKeyboard);
     });
 
     bot.command(CONSTANTS.COMMAND.MONITOR_ADD, (ctx) => {
@@ -35,20 +33,10 @@ async function bootstrap() {
                 type: [],
             },
         };
-        const inlineKeyboard = Markup.inlineKeyboard([
-            Markup.button.callback('HTTP', 'HTTP'),
-            Markup.button.callback('WHOIS', 'WHOIS'),
-            Markup.button.callback('SSL', 'SSL'),
-        ]);
-        // return ctx.replyWithMarkdown(`Nhập tên miền muốn theo dõi`, inlineKeyboard);
         return ctx.reply(
-            `Chọn dịch vụ theo dõi hoặc bấm /cancel để hủy`,
+            `Chọn dịch vụ theo dõi (hoặc bấm /cancel để hủy)`,
             Markup.keyboard([['HTTP', 'WHOIS', 'SSL']]).oneTime(),
         );
-    });
-
-    bot.action('HTTP', (ctx) => {
-        return ctx.reply('🙂');
     });
 
     bot.command(CONSTANTS.COMMAND.WHOIS, (ctx) => {
@@ -58,23 +46,20 @@ async function bootstrap() {
 
     bot.on('text', async (ctx) => {
         const userId = ctx.message.from.id;
-        console.log('state', state);
 
         if (state[userId]?.whois) {
-            const whois = await get(
-                `https://whois.inet.vn/api/whois/domainspecify/${ctx.message.text}`,
-            );
-            if (whois.code == '0') {
-                if (whois.message != 'Đã được đăng ký') {
-                    return ctx.reply(whois.message);
+            const domainDetail = await whoisDomain(ctx.message.text);
+            if (domainDetail.code == '0') {
+                if (domainDetail.message != 'Đã được đăng ký') {
+                    return ctx.reply(domainDetail.message);
                 }
                 state[userId] = '';
                 return ctx.reply(
-                    `Tên miền: ${whois.domainName}
-Nhà đăng ký: <code>${whois.registrar}</code>
-Ngày đăng ký: <code>${whois.creationDate.replace(/-/g, '/')}</code>
-Ngày hết hạn: <code>${whois.expirationDate.replace(/-/g, '/')}</code>`,
-                    { parse_mode: 'HTML' },
+                    `Tên miền: ${domainDetail.domainName}
+Nhà đăng ký: <code>${domainDetail.registrar}</code>
+Ngày đăng ký: <code>${domainDetail.creationDate.replace(/-/g, '/')}</code>
+Ngày hết hạn: <code>${domainDetail.expirationDate.replace(/-/g, '/')}</code>`,
+                    optionHTML,
                 );
             }
             return ctx.reply('Tên miền chưa được đăng ký');
@@ -83,12 +68,16 @@ Ngày hết hạn: <code>${whois.expirationDate.replace(/-/g, '/')}</code>`,
         if (state[userId]?.monitor_add) {
             if (state[userId].monitor_add.type.length == 0) {
                 state[userId].monitor_add.type.push(ctx.message.text);
-                return ctx.reply(`Nhập tên miền muốn theo dõi`);
+                return ctx.reply(
+                    `Nhập tên miền muốn theo dõi (hoặc bấm /cancel để hủy)`,
+                    removeKeyboard,
+                );
             }
             if (!validateDomain(ctx.message.text)) {
-                return ctx.reply('Tên miền sai định dạng');
+                return ctx.reply(CONSTANTS.TEXT.INVALID_DOMAIN);
             }
-            const data = await post(`http://103.57.222.93:8082/api/service/create_update`, {
+            ctx.reply(CONSTANTS.TEXT.PROCESSING);
+            const data = await addMonitor({
                 serviceCreateUpdateDtoList: [
                     {
                         name: ctx.message.text,
@@ -99,7 +88,7 @@ Ngày hết hạn: <code>${whois.expirationDate.replace(/-/g, '/')}</code>`,
             });
             if (data.status == CONSTANTS.STATUS.SUCCESS) {
                 state[userId] = '';
-                return ctx.reply('Tên miền đã được theo dõi');
+                return ctx.reply(CONSTANTS.TEXT.SUCCESS);
             } else {
                 if (data.message == 'Dịch vụ theo dõi không hợp lệ') {
                     ctx.reply(data.message);
@@ -110,7 +99,7 @@ Ngày hết hạn: <code>${whois.expirationDate.replace(/-/g, '/')}</code>`,
                     );
                 }
                 return ctx.reply(`${data.message}
-Thử lại với tên miền khác hoặc bấm /cancel để hủy`);
+Nhập tên miền khác hoặc bấm /cancel để hủy`);
             }
         }
 
@@ -124,18 +113,22 @@ Thử lại với tên miền khác hoặc bấm /cancel để hủy`);
     bot.on('message', async (ctx) => {
         const msg: any = ctx.message;
         if (msg.left_chat_member) {
-            if (msg.left_chat_member.id == botId) {
-                console.log('Bot da bi xoa khoi group');
-                return;
-            }
-            return ctx.reply(`Tạm biệt ${getFullName(msg.left_chat_member)}`);
+            if (msg.left_chat_member.id == botId) return;
+            return ctx.reply(
+                `Tạm biệt <code>${getFullName(msg.left_chat_member)}</code>`,
+                optionHTML,
+            );
         }
 
         if (msg.new_chat_member) {
-            return ctx.reply(`Chào mừng thành viên mới ${getFullName(msg.new_chat_member)}`);
+            if (msg.new_chat_member.id == botId) return;
+            return ctx.reply(
+                `Chào mừng thành viên mới <code>${getFullName(msg.new_chat_member)}</code>`,
+                optionHTML,
+            );
         }
 
-        console.log('============= on message =============', ctx);
+        console.log('============= on message =============', ctx.message);
     });
 
     await bot.launch();

@@ -1,18 +1,4 @@
 export class CONSTANTS {
-    static readonly AVATAR_DEFAULT = 'https://sso.inet.vn/public/img/avatar/default.jpeg';
-    static readonly SECRET_KEY = 'CHAT_BOT_2021';
-    static readonly FIRST_PAGE = 1;
-    static readonly ERROR = {
-        USERNAME_EXISTS: 'Username exists',
-        PERMISSION_DENIED: 'Permission Denied',
-        ACCOUNT_CANNOT_CONNECT: 'Can not connect to given account',
-        INVALID_PARAMETER: 'Invalid parameter',
-        DATA_NOT_FOUND: 'Data Not Found',
-        WRONG_PASSWORD: 'Wrong Password',
-    };
-    static readonly TEXT = {
-        DO_YOU_LOVE_ME: 'Do you love me?',
-    };
     static readonly STATUS = {
         SUCCESS: 'SUCCESS',
         ERROR: 'ERROR',
@@ -22,13 +8,18 @@ export class CONSTANTS {
         MONITOR_ADD: 'monitor_add',
         CANCEL: 'cancel',
     };
-    static readonly BOT_INTRO = `Xin chào, tôi là trợ lý của v21official
+    static readonly BOT_INTRO = `Xin chào, tôi là trợ lý của v21official,
     
-/tha_tim - Bot thả tim
 /monitor_add - Thêm mới dịch vụ
-/whois - Kiểm tra tên miền
+/whois - Kiểm tra thông tin tên miền
 /cancel - Hủy lệnh đang chờ và xóa keyboard
     `;
+    static readonly TEXT = {
+        SUCCESS: 'Thành công',
+        ERROR: 'Thất bại',
+        PROCESSING: 'Đang xử lý . . .',
+        INVALID_DOMAIN: 'Sai định dạng tên miền',
+    };
 }
 
 export function validateDomain(domain: string) {
